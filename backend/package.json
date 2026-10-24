@@ -6,6 +6,9 @@
   "private": true,
   "license": "UNLICENSED",
   "type": "module",
+  "engines": {
+    "node": ">=24 <25"
+  },
   "scripts": {
     "build": "nest build",
     "deploy": "nest deploy",
@@ -26,9 +29,11 @@
   "dependencies": {
     "@nestjs/common": "^12.0.1",
     "@nestjs/core": "^12.0.1",
+    "@nestjs/jwt": "^12.0.3",
     "@nestjs/platform-express": "^12.0.1",
     "@prisma/client": "^7.10.1",
     "@prisma/orm-postgres": "8.0.0-rc.20",
+    "bcryptjs": "^3.0.3",
     "dotenv": "^18.0.9",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
@@ -49,6 +54,7 @@
     "prisma": "8.0.0-rc.27",
     "source-map-support": "^0.5.21",
     "supertest": "^7.0.0",
+    "tsx": "^4.23.15",
     "typescript": "^6.0.2",
     "vite": "^8.0.0",
     "vitest": "^4.1.2"
