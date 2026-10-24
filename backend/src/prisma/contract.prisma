@@ -1,0 +1,64 @@
+// use prisma-8
+
+model User {
+  id           Int       @id @default(autoincrement())
+  name         String    @unique
+  passwordHash String
+  role         String    @default("MASTER")
+  requests     Request[]
+}
+
+model Client {
+  id        Int               @id @default(autoincrement())
+  fullName  String
+  phone     String
+  address   String
+  boilers   Boiler[]
+  requests  Request[]
+  createdAt TimestamptzString @default(now())
+}
+
+model Boiler {
+  id                 Int                @id @default(autoincrement())
+  client             Client             @relation(fields: [clientId], references: [id])
+  clientId           Int
+  brand              String
+  modelName          String
+  serialNumber       String?
+  type               String             @default("TURBO")
+  purchaseDate       TimestamptzString?
+  soldPlaceInBooklet Boolean            @default(false)
+  requests           Request[]
+}
+
+model Request {
+  id            Int                @id @default(autoincrement())
+  createdAt     TimestamptzString  @default(now())
+  status        String             @default("NEW")
+  kind          String
+  client        Client             @relation(fields: [clientId], references: [id])
+  clientId      Int
+  boiler        Boiler             @relation(fields: [boilerId], references: [id])
+  boilerId      Int
+  warranty      Boolean            @default(false)
+  hasBooklet    Boolean            @default(false)
+  launchDate    TimestamptzString?
+  clientMessage String?
+  price         Int                @default(0)
+  createdBy     User?              @relation(fields: [createdById], references: [id])
+  createdById   Int?
+  works         Work[]
+}
+
+model Work {
+  id          Int               @id @default(autoincrement())
+  request     Request           @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  requestId   Int
+  date        TimestamptzString
+  description String
+}
+
+model Setting {
+  key   String @id
+  value String
+}
