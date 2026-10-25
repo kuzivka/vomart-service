@@ -265,3 +265,27 @@ button.primary:hover,
 .seg button.on:hover {
   filter: brightness(1.05);
 }
+.login .pw {
+  position: relative;
+  margin: 4px 0 10px;
+}
+.login .pw input {
+  margin: 0;
+  padding-right: 44px;
+}
+.login .pw button {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: auto;
+  margin: 0;
+  padding: 6px 8px;
+  border: none;
+  background: transparent;
+  color: var(--mu);
+  display: flex;
+}
+.login .pw button:hover {
+  color: var(--tx);
+}
