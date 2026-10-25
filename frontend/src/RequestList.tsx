@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api } from "./api";
+import { api, fmt } from "./api";
 
 type Req = {
   id: number;
@@ -9,6 +9,7 @@ type Req = {
   price: number;
   client?: { fullName: string; phone: string; address: string };
   boiler?: { brand: string; modelName: string; serialNumber: string | null };
+  creator?: string | null;
 };
 
 const iso = (d: Date) =>
@@ -43,11 +44,13 @@ const STATUS: Record<string, string> = {
   NEW: "Нова",
   IN_PROGRESS: "В роботі",
   DONE: "Виконано",
+  CANCELLED: "Скасовано",
 };
 const COLOR: Record<string, string> = {
   NEW: "s0",
   IN_PROGRESS: "s1",
   DONE: "s2",
+    CANCELLED: "s3",
 };
 
 export default function RequestList({
@@ -131,7 +134,13 @@ export default function RequestList({
         <p className="muted">Заявок за цей період немає</p>
       )}
       {items.map((r) => (
-  <div key={r.id} onClick={() => onOpen(r.id)} className={`card ${COLOR[r.status] ?? "s0"}`}>          <b>№{r.id}</b>
+        <div
+          key={r.id}
+          onClick={() => onOpen(r.id)}
+          className={`card ${COLOR[r.status] ?? "s0"}`}
+        >
+          {" "}
+          <b>№{r.id}</b>
           <div>
             <b>{r.client?.fullName}</b>
             <div className="muted">{r.client?.phone}</div>
@@ -147,8 +156,9 @@ export default function RequestList({
             <span className="tag">{KIND[r.kind] ?? r.kind}</span>
             <span className="tag">{STATUS[r.status] ?? r.status}</span>
             <div className="muted">
-              {String(r.createdAt).slice(0, 10)} · {r.price} грн
-            </div>
+              {fmt(r.createdAt)} · {r.price} грн
+              {r.creator ? " · " + r.creator : ""}
+            </div>{" "}
           </div>
         </div>
       ))}

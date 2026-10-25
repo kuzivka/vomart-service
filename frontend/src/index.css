@@ -97,6 +97,9 @@ button.primary,
 .card.s2 {
   --c: #7c3aed;
 }
+.card.s3 {
+  --c: #e33b3b;
+}
 .muted {
   color: var(--mu);
   font-size: 13px;

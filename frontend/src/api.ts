@@ -1,6 +1,12 @@
-const API = import.meta.env.VITE_API ?? "http://localhost:3002";
+const API = import.meta.env.VITE_API ?? "http://localhost:3000";
 
 export type User = { id: number; name: string; role: string };
+
+export function fmt(v: unknown): string {
+  const s = String(v ?? "").slice(0, 10);
+  const [y, m, d] = s.split("-");
+  return y && m && d ? `${d}.${m}.${y}` : "";
+}
 
 export async function api(path: string, opts: RequestInit = {}) {
   const token = localStorage.getItem("token");
