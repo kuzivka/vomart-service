@@ -4,8 +4,8 @@
   --tx: #1b2430;
   --mu: #667085;
   --bd: #dfe3e8;
-  --ac: #c2410c;
-  --ax: #fff;
+  --ac: #ff8a1f;
+  --ax: #1b2430;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -14,7 +14,7 @@
     --tx: #e8ecf0;
     --mu: #98a2b3;
     --bd: #323a44;
-    --ac: #ff8a4c;
+    --ac: #ffa23d;
     --ax: #14181d;
     color-scheme: dark;
   }
@@ -231,4 +231,37 @@ button.primary,
 }
 .card {
   cursor: pointer;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.brand img {
+  height: 34px;
+  width: auto;
+}
+.login-logo {
+  display: block;
+  height: 90px;
+  width: auto;
+  margin: 0 auto 8px;
+}
+.login h2 {
+  text-align: center;
+  margin: 0 0 8px;
+}
+header {
+  border-bottom: 3px solid var(--ac);
+}
+input:focus,
+select:focus,
+textarea:focus,
+button:focus-visible {
+  outline: 2px solid var(--ac);
+  outline-offset: 1px;
+}
+button.primary:hover,
+.seg button.on:hover {
+  filter: brightness(1.05);
 }

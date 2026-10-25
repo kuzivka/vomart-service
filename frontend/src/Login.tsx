@@ -26,10 +26,12 @@ export default function Login({ onLogin }: { onLogin: (u: User) => void }) {
   return (
     <div className="login">
       <div className="box">
-        <h2>🔥 Вхід</h2>
-        <label>Користувач</label>
+        <img className="login-logo" src="/logo.png" alt="Vomart" />
+        <h2>Вхід</h2> <label>Користувач</label>
         <select value={name} onChange={(e) => setName(e.target.value)}>
-          {NAMES.map((n) => <option key={n}>{n}</option>)}
+          {NAMES.map((n) => (
+            <option key={n}>{n}</option>
+          ))}
         </select>
         <label>Пароль</label>
         <input
@@ -39,7 +41,9 @@ export default function Login({ onLogin }: { onLogin: (u: User) => void }) {
           onKeyDown={(e) => e.key === "Enter" && submit()}
         />
         <div className="err">{error}</div>
-        <button className="primary" onClick={submit}>Увійти</button>
+        <button className="primary" onClick={submit}>
+          Увійти
+        </button>
       </div>
     </div>
   );
