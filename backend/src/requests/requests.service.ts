@@ -14,6 +14,7 @@ const defaultPrice = (kind: string, type: string) =>
 @Injectable()
 export class RequestsService {
   async list(q: Record<string, string>) {
+    const digits = (v: any) => String(v ?? '').replace(/\D/g, '');
     const [reqs, clients, boilers, users] = await Promise.all([
       db.orm.public.Request.all(),
       db.orm.public.Client.all(),
@@ -39,7 +40,7 @@ export class RequestsService {
           has(r.boiler?.serialNumber, q.serial) &&
           has(r.client?.address, q.address) &&
           has(r.client?.fullName, q.name) &&
-          has(r.client?.phone, q.phone),
+          digits(r.client?.phone).includes(digits(q.phone)),
       )
       .sort((a: any, b: any) => b.id - a.id);
   }
@@ -86,7 +87,23 @@ export class RequestsService {
   }
 
   async update(id: number, b: any) {
-    const allowed = [
+    const r: any = await db.orm.public.Request.where({ id }).first();
+    if (!r) throw new NotFoundException();
+    const pick = (keys: string[]) => {
+      const o: any = {};
+      for (const k of keys) if (b[k] !== undefined) o[k] = b[k];
+      return o;
+    };
+    const client = pick(['fullName', 'phone', 'address']);
+    const boiler = pick([
+      'brand',
+      'modelName',
+      'serialNumber',
+      'type',
+      'soldPlaceInBooklet',
+      'purchaseDate',
+    ]);
+    const request = pick([
       'status',
       'kind',
       'warranty',
@@ -94,10 +111,12 @@ export class RequestsService {
       'launchDate',
       'clientMessage',
       'price',
-    ];
-    const patch: any = {};
-    for (const k of allowed) if (b[k] !== undefined) patch[k] = b[k];
-    return db.orm.public.Request.where({ id }).update(patch);
+    ]);
+    if (Object.keys(client).length)
+      await db.orm.public.Client.where({ id: r.clientId }).update(client);
+    if (Object.keys(boiler).length)
+      await db.orm.public.Boiler.where({ id: r.boilerId }).update(boiler);
+    return db.orm.public.Request.where({ id }).update(request);
   }
 
   addWork(requestId: number, b: { date: string; description: string }) {

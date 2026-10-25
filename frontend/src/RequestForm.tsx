@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api, fmt } from "./api";
+import { api, fmt, fmtPhone } from "./api";
 import type { User } from "./api";
 
 const blank = {
@@ -138,9 +138,18 @@ export default function RequestForm({
             kind,
             warranty: f.warranty,
             hasBooklet: f.hasBooklet,
-            launchDate: opt(f.launchDate),
+            launchDate: f.launchDate || null,
             clientMessage: f.clientMessage,
             price: Number(f.price) || 0,
+            fullName: f.fullName,
+            phone: f.phone,
+            address: f.address,
+            brand: f.brand,
+            modelName: f.modelName,
+            serialNumber: f.serialNumber || null,
+            type: f.type,
+            soldPlaceInBooklet: f.soldPlaceInBooklet,
+            purchaseDate: f.purchaseDate || null,
           }),
         });
       }
@@ -164,7 +173,7 @@ export default function RequestForm({
     }
   }
 
-  const ro = readOnly || !isNew; // client and boiler fields are fixed after creation
+  const ro = readOnly;
   const Txt = (label: string, k: string, o: any = {}) => (
     <div>
       <label>{label}</label>
@@ -227,10 +236,20 @@ export default function RequestForm({
         <section className="sc">
           <h3>Клієнт</h3>
           <div className="g">
-            {Txt("ПІБ", "fullName", { ro })}
-            {Txt("Телефон", "phone", { ro })}
+            {Txt("ПІБ", "fullName")}
+            <div>
+              <label>Телефон</label>
+              <input
+                type="tel"
+                inputMode="tel"
+                placeholder="+380 (50) 123-45-67"
+                value={f.phone}
+                disabled={ro}
+                onChange={(e) => set("phone", fmtPhone(e.target.value))}
+              />
+            </div>{" "}
           </div>
-          {Txt("Адреса", "address", { ro })}
+          {Txt("Адреса", "address")}
         </section>
 
         <section className="sc">
@@ -254,7 +273,8 @@ export default function RequestForm({
                 ))}
               </select>
             </div>
-            {Txt("Серійний номер", "serialNumber", { ro })}
+            {Txt("Модель", "modelName")}
+            {Txt("Серійний номер", "serialNumber")}
             <div>
               <label>Тип</label>
               <select

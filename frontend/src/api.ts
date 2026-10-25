@@ -25,3 +25,20 @@ export async function api(path: string, opts: RequestInit = {}) {
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
+
+export function fmtPhone(v: string): string {
+  const raw = v.replace(/\D/g, "");
+  if (raw.length <= 3 && "380".startsWith(raw)) return "";
+  let d = raw;
+  if (d.startsWith("380")) d = d.slice(3);
+  else if (d.startsWith("80")) d = d.slice(2);
+  else if (d.startsWith("0")) d = d.slice(1);
+  d = d.slice(0, 9);
+  let r = "+380";
+  if (d.length) r += " " + d.slice(0, 2);
+  if (d.length >= 2) r += " ";
+  if (d.length > 2) r += " " + d.slice(2, 5);
+  if (d.length > 5) r += " " + d.slice(5, 7);
+  if (d.length > 7) r += " " + d.slice(7, 9);
+  return r;
+}
