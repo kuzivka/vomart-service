@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api, fmt } from "./api";
+import CopyPhone from "./CopyPhone";
 
 type Req = {
   id: number;
@@ -18,6 +19,7 @@ const iso = (d: Date) =>
     .slice(0, 10);
 
 function span(range: string, d1: string, d2: string): [string, string] {
+  if (range === "all") return ["", ""];
   const t = new Date();
   if (range === "today") return [iso(t), iso(t)];
   if (range === "week") {
@@ -50,7 +52,7 @@ const COLOR: Record<string, string> = {
   NEW: "s0",
   IN_PROGRESS: "s1",
   DONE: "s2",
-    CANCELLED: "s3",
+  CANCELLED: "s3",
 };
 
 export default function RequestList({
@@ -60,7 +62,8 @@ export default function RequestList({
   onOpen: (id: number) => void;
   ver: number;
 }) {
-  const [range, setRange] = useState("today");
+  const [loading, setLoading] = useState(true);
+  const [range, setRange] = useState("all");
   const [d1, setD1] = useState("");
   const [d2, setD2] = useState("");
   const [f, setF] = useState({ serial: "", address: "", name: "", phone: "" });
@@ -68,18 +71,34 @@ export default function RequestList({
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const [from, to] = span(range, d1, d2);
-    const p = new URLSearchParams();
-    if (from) p.set("from", from);
-    if (to) p.set("to", to);
-    Object.entries(f).forEach(([k, v]) => v && p.set(k, v));
-    api("/requests?" + p.toString())
-      .then((r) => {
-        setItems(r);
-        setError("");
-      })
-      .catch(() => setError("Не вдалося завантажити заявки"));
+    let stale = false;
+    setLoading(true);
+    const t = setTimeout(() => {
+      const [from, to] = span(range, d1, d2);
+      const p = new URLSearchParams();
+      if (from) p.set("from", from);
+      if (to) p.set("to", to);
+      Object.entries(f).forEach(([k, v]) => v && p.set(k, v));
+      api("/requests?" + p.toString())
+        .then((r) => {
+          if (!stale) {
+            setItems(r);
+            setError("");
+          }
+        })
+        .catch(() => {
+          if (!stale) setError("Не вдалося завантажити заявки");
+        })
+        .finally(() => {
+          if (!stale) setLoading(false);
+        });
+    }, 300);
+    return () => {
+      stale = true;
+      clearTimeout(t);
+    };
   }, [range, d1, d2, f, ver]);
+
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setF({ ...f, [k]: e.target.value });
 
@@ -87,6 +106,7 @@ export default function RequestList({
     <main>
       <div className="row seg">
         {[
+          ["all", "Всі"],
           ["today", "Сьогодні"],
           ["week", "Тиждень"],
           ["month", "Місяць"],
@@ -95,6 +115,10 @@ export default function RequestList({
           <button
             key={k}
             className={range === k ? "on" : ""}
+            ref={(el) => {
+              if (el && range === k)
+                el.scrollIntoView({ inline: "nearest", block: "nearest" });
+            }}
             onClick={() => setRange(k)}
           >
             {l}
@@ -130,38 +154,51 @@ export default function RequestList({
         <input placeholder="Телефон" value={f.phone} onChange={set("phone")} />
       </div>
       {error && <p className="muted">{error}</p>}
-      {items.length === 0 && !error && (
+      {items.length === 0 && !error && !loading && (
         <p className="muted">Заявок за цей період немає</p>
       )}
-      {items.map((r) => (
-        <div
-          key={r.id}
-          onClick={() => onOpen(r.id)}
-          className={`card ${COLOR[r.status] ?? "s0"}`}
-        >
-          {" "}
-          <b>№{r.id}</b>
-          <div>
-            <b>{r.client?.fullName}</b>
-            <div className="muted">{r.client?.phone}</div>
-          </div>
-          <div>
-            {r.client?.address}
-            <div className="muted">
-              {r.boiler?.brand} {r.boiler?.modelName}
-              {r.boiler?.serialNumber ? " · " + r.boiler.serialNumber : ""}
+      {loading &&
+        items.length === 0 &&
+        [0, 1, 2, 3].map((i) => <div key={i} className="sk" />)}
+      <div className={loading ? "dim" : ""}>
+        {items.map((r) => (
+          <div
+            key={r.id}
+            onClick={() => onOpen(r.id)}
+            className={`card ${COLOR[r.status] ?? "s0"}`}
+          >
+            {" "}
+            <b>№{r.id}</b>
+            <div>
+              <b>{r.client?.fullName}</b>
+              <div className="muted phone">
+                <a
+                  href={"tel:" + (r.client?.phone ?? "").replace(/[^\d+]/g, "")}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {r.client?.phone}
+                </a>
+                <CopyPhone phone={r.client?.phone} />
+              </div>{" "}
+            </div>
+            <div>
+              {r.client?.address}
+              <div className="muted">
+                {r.boiler?.brand} {r.boiler?.modelName}
+                {r.boiler?.serialNumber ? " · " + r.boiler.serialNumber : ""}
+              </div>
+            </div>
+            <div>
+              <span className="tag">{KIND[r.kind] ?? r.kind}</span>
+              <span className="tag">{STATUS[r.status] ?? r.status}</span>
+              <div className="muted">
+                {fmt(r.createdAt)} · {r.price} грн
+                {r.creator ? " · " + r.creator : ""}
+              </div>{" "}
             </div>
           </div>
-          <div>
-            <span className="tag">{KIND[r.kind] ?? r.kind}</span>
-            <span className="tag">{STATUS[r.status] ?? r.status}</span>
-            <div className="muted">
-              {fmt(r.createdAt)} · {r.price} грн
-              {r.creator ? " · " + r.creator : ""}
-            </div>{" "}
-          </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </main>
   );
 }

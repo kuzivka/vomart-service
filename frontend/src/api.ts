@@ -42,3 +42,25 @@ export function fmtPhone(v: string): string {
   if (d.length > 7) r += " " + d.slice(7, 9);
   return r;
 }
+
+export function phoneRaw(v: string): string {
+  const d = String(v ?? "").replace(/\D/g, "");
+  return d ? "+" + d : "";
+}
+
+export async function copyText(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    const el = document.createElement("textarea");
+    el.value = text;
+    el.style.position = "fixed";
+    el.style.opacity = "0";
+    document.body.appendChild(el);
+    el.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(el);
+    return ok;
+  }
+}

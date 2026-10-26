@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api, fmt, fmtPhone } from "./api";
 import type { User } from "./api";
+import CopyPhone from "./CopyPhone";
 
 const blank = {
   fullName: "",
@@ -64,6 +65,10 @@ export default function RequestForm({
   });
   const [touched, setTouched] = useState(false);
   const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [loaded, setLoaded] = useState(isNew);
+  const busy = useRef(false);
+  const busyWork = useRef(false);
   const set = (k: string, v: any) => setF((p: any) => ({ ...p, [k]: v }));
 
   useEffect(() => {
@@ -88,8 +93,12 @@ export default function RequestForm({
         setWorks(r.works ?? []);
         setTouched(true);
         setCreator(r.creator ?? "");
+        setLoaded(true);
       })
-      .catch(() => setError("Не вдалося завантажити заявку"));
+      .catch(() => {
+        setError("Не вдалося завантажити заявку");
+        setLoaded(true);
+      });
   }, [id]);
 
   useEffect(() => {
@@ -108,6 +117,9 @@ export default function RequestForm({
   const opt = (v: any) => (v === "" ? undefined : v);
 
   async function save() {
+    if (busy.current) return;
+    busy.current = true;
+    setSaving(true);
     try {
       if (isNew) {
         await api("/requests", {
@@ -156,11 +168,15 @@ export default function RequestForm({
       onClose(true);
     } catch (e: any) {
       setError("Не вдалося зберегти: " + (e.message ?? ""));
+    } finally {
+      busy.current = false;
+      setSaving(false);
     }
   }
 
   async function addWork() {
-    if (!w.description.trim() || id === null) return;
+    if (!w.description.trim() || id === null || busyWork.current) return;
+    busyWork.current = true;
     try {
       await api(`/requests/${id}/works`, {
         method: "POST",
@@ -170,6 +186,8 @@ export default function RequestForm({
       setW({ ...w, description: "" });
     } catch {
       setError("Не вдалося додати роботу");
+    } finally {
+      busyWork.current = false;
     }
   }
 
@@ -196,6 +214,19 @@ export default function RequestForm({
       {label}
     </label>
   );
+  if (!loaded)
+    return (
+      <div className="overlay">
+        <div className="form">
+          <div className="bar">
+            <button onClick={() => onClose(false)}>← Назад</button>
+          </div>
+          <div className="sk" />
+          <div className="sk" />
+          <div className="sk" />
+        </div>
+      </div>
+    );
 
   return (
     <div className="overlay">
@@ -204,8 +235,8 @@ export default function RequestForm({
           <button onClick={() => onClose(false)}>← Назад</button>
           <button>Згенерувати угоду</button>
           {!readOnly && (
-            <button className="primary" onClick={save}>
-              Зберегти
+            <button className="primary" onClick={save} disabled={saving}>
+              {saving ? "Збереження…" : "Зберегти"}
             </button>
           )}
         </div>
@@ -239,15 +270,18 @@ export default function RequestForm({
             {Txt("ПІБ", "fullName")}
             <div>
               <label>Телефон</label>
-              <input
-                type="tel"
-                inputMode="tel"
-                placeholder="+380 (50) 123-45-67"
-                value={f.phone}
-                disabled={ro}
-                onChange={(e) => set("phone", fmtPhone(e.target.value))}
-              />
-            </div>{" "}
+              <div className="phone-row">
+                <input
+                  type="tel"
+                  inputMode="tel"
+                  placeholder="+380 (50) 123-45-67"
+                  value={f.phone}
+                  disabled={ro}
+                  onChange={(e) => set("phone", fmtPhone(e.target.value))}
+                />
+                <CopyPhone phone={f.phone} />
+              </div>
+            </div>
           </div>
           {Txt("Адреса", "address")}
         </section>
@@ -365,7 +399,9 @@ export default function RequestForm({
                   value={w.description}
                   onChange={(e) => setW({ ...w, description: e.target.value })}
                 />
-                <button onClick={addWork}>+</button>
+                <button disabled={busyWork.current} onClick={addWork}>
+                  +
+                </button>
               </div>
             )}
           </section>
